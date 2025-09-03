@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Logística - Realtime</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        margin: 20px;
+      }
+      input,
+      button,
+      textarea {
+        font-size: 14px;
+      }
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      #out {
+        width: 100%;
+        height: 280px;
+        border: 1px solid #ccc;
+        padding: 8px;
+        overflow: auto;
+        background: #fafafa;
+      }
+      code {
+        background: #eee;
+        padding: 2px 6px;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Panel de Logística (Socket.IO)</h2>
+
+    <div class="row">
+      <label>Access token (JWT):</label>
+      <input
+        id="token"
+        type="text"
+        placeholder="Pega aquí tu token"
+        style="flex: 1; min-width: 360px"
+      />
+      <button onclick="connect()">Conectar</button>
+    </div>
+
+    <div class="row">
+      <label>notificacionId:</label>
+      <input
+        id="notifId"
+        type="text"
+        placeholder="Se llena al recibir un evento"
+        style="flex: 1; min-width: 260px"
+      />
+      <button onclick="markRead()">Marcar leído</button>
+    </div>
+
+    <pre id="out"></pre>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+      let socket;
+
+      function log(msg) {
+        const out = document.getElementById("out");
+        out.textContent += msg + "\n";
+        out.scrollTop = out.scrollHeight;
+      }
+
+      function connect() {
+        const token = document.getElementById("token").value.trim();
+        if (!token) return log(" Pega primero un access token");
+
+        socket = io("http://localhost:4101", { auth: { token } });
+
+        socket.on("connect", () => log(" Conectado: " + socket.id));
+        socket.on("connect_error", (err) =>
+          log("❌ connect_error: " + err.message)
+        );
+        socket.on("disconnect", () => log(" Desconectado"));
+
+        // Evento principal para Logística
+        socket.on("logistica:nuevo-pedido", (msg) => {
+          log("📦 Nuevo pedido: " + JSON.stringify(msg));
+          // autollenar el último id para marcar leído
+          if (msg && msg._id)
+            document.getElementById("notifId").value = msg._id;
+        });
+
+        // Cuando otro cliente o HTTP marque como leído
+        socket.on("logistica:notificacion-actualizada", (msg) => {
+          log("🔄 Actualizado: " + JSON.stringify(msg));
+        });
+      }
+
+      function markRead() {
+        if (!socket || !socket.connected) return log("⚠️ Conéctate primero");
+        const id = document.getElementById("notifId").value.trim();
+        if (!id) return log("Ingresa notificacionId");
+        socket.emit("logistica:pedido-leido", { notificacionId: id });
+        log("➡️ Emitido logistica:pedido-leido para " + id);
+      }
+    </script>
+  </body>
+</html>
