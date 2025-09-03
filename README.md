@@ -16,7 +16,7 @@ El modelo de base de datos de Eduhub para el apartado de notificaciones está di
 
 ![Imagen de ejemplo del proyecto](assets/4.jpg)
 
-2. Se copia el access token generado en el panel de logistica para recibir las notificaciones.
+2. Se copia el access token generado en el panel de logística para recibir las notificaciones.
 
 ![Imagen de ejemplo del proyecto](assets/2.jpg)
 
